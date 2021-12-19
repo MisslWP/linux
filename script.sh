@@ -195,6 +195,14 @@ is_valid_list(){
     return 1
 }
 
+is_number(){
+    if echo "$1" | grep -Eq "^[0-9]+$"; then
+        return 0
+    fi
+
+    return 1
+}
+
 is_valid_dir(){
     if [ -d $1 ]; then
         return 0
@@ -371,6 +379,71 @@ load_or_gen_config(){
     fi
 }
 
+delete_element_by_index(){
+    new_elements=""
+    i=0
+    set_ifs ':'
+    for el in $1; do
+        i=$(($i+1))
+        if ! [ $i -eq $2 ]; then
+            if [ -z $new_elements ]; then
+                new_elements=$new_elements$el
+            else
+                new_elements=$new_elements:$el
+            fi
+        fi
+    done
+    restore_ifs
+    echo $new_elements
+}
+
+count_elements_in_list(){
+    i=0
+    set_ifs ':'
+
+    for el in $1; do
+        i=$(($i+1))
+    done
+
+    restore_ifs
+
+    echo $i
+}
+
+remove_temp_element(){
+    count=$(count_elements_in_list $TEMP_FILES)
+    pos=$1
+    if ! is_number $pos; then
+        echo "'$pos' не является числом!"
+    elif [ $count -eq 0 ]; then
+        echo "Список расширений временных файлов пуст!"
+    elif [ $pos -lt 1 -o $pos -gt $count ]; then
+        echo "Вы можете удалить элементы только в диапазоне от 1 до $count"
+    else
+        new=$(delete_element_by_index "$TEMP_FILES" $pos)
+        TEMP_FILES=$new
+        echo "Элемент на позиции $pos удалён из списка расширений временных файлов!"
+    fi
+    upload_config
+}
+
+remove_temp_element(){
+    count=$(count_elements_in_list $WORK_FILES)
+    pos=$1
+    if ! is_number $pos; then
+        echo "'$pos' не является числом!"
+    elif [ $count -eq 0 ]; then
+        echo "Список расширений рабочих файлов пуст!"
+    elif [ $pos -lt 1 -o $pos -gt $count ]; then
+        echo "Вы можете удалить элементы только в диапазоне от 1 до $count"
+    else
+        new=$(delete_element_by_index "$WORK_FILES" $pos)
+        WORK_FILES=$new
+        echo "Элемент на позиции $pos удалён из списка расширений временных файлов!"
+    fi
+    upload_config
+}
+
 run_interactive(){
     while true; do
         count=0
@@ -406,7 +479,7 @@ run_interactive(){
         elif [ $mode == "temp_add" ]; then
             add_temp_files $argument
         elif [ $mode == "temp_remove" ]; then
-            true
+            remove_temp_element $argument
         elif [ $mode == "temp_clear" ]; then
             true
         elif [ $mode == "temp_list" ]; then
@@ -418,7 +491,7 @@ run_interactive(){
         elif [ $mode == "work_add" ]; then
             add_work_files $argument
         elif [ $mode == "work_remove" ]; then
-            true
+            remove_work_element $argument
         elif [ $mode == "work_list" ]; then
             true
         elif [ $mode == "command_print" ]; then
@@ -448,7 +521,6 @@ if [ $EUID -eq 0 ]; then
     echo "Скрипт не может быть запущен с правами администратора!"
     exit 1
 fi
-
 
 trap 'exit_script' 1 2 3 9 15
 
