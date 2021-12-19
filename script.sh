@@ -120,6 +120,7 @@ BIG_HELP="Использование: $FILE_NAME [ПАРАМЕТР][РЕЖИМ] 
         $FILE_NAME -cx
     Удаление временных файлов:
         $FILE_NAME -f
+Интерактивный режим может быть активирован через режим работы с меню путём выбора соответствующей команды.
 Команды интерактивного режима:
     help            Вывести справку интерактивного режима
     big_help        Вывести полную справку
@@ -230,7 +231,7 @@ is_number(){
 }
 
 is_valid_dir(){
-    if [ -d $1 ]; then
+    if [ -d $1 ] && [ -n $1 ]; then
         return 0
     fi
 
@@ -320,8 +321,8 @@ add_work_files(){
 }
 
 set_working_dir(){
-    if is_valid_dir $argument ; then
-        WORK_DIR=$argument
+    if is_valid_dir $1 ; then
+        WORK_DIR=$1
         echo "Новая рабочая папка скрипта установлена!"
         upload_config
     else
@@ -516,7 +517,7 @@ delete_temp(){
         size_info=''
         for el in $TEMP_FILES; do
             set_ifs ''
-            $(find $WORK_DIR -type f -name $el -exec du -h {} \;)
+            $(find $WORK_DIR -maxdepth 1 -type f -name $el -exec du -h {} \;)
             restore_ifs
 
             echo "Временные файлы удалены!"
@@ -534,7 +535,7 @@ print_work_info(){
         work_info=''
         for el in $WORK_FILES; do
             set_ifs ''
-            info=$(find $WORK_DIR -type f -name $el -exec wc -l -w {} \;)
+            info=$(find $WORK_DIR -maxdepth 1 -type f -name $el -exec wc -l -w {} \;)
             if [ -z $work_info ]; then
                 work_info=$info
             else
@@ -554,6 +555,10 @@ run_with_menu(){
         print_menu
         read -r -p "Введите желаемый пункт меню: "
         mode=$REPLY
+        if [ -z $mode ]; then
+            echo "Данный пункт меню отсутствует!"
+            continue
+        fi
         if [ $mode == "1" ]; then
             temp_print
         elif [ $mode == "2" ]; then
@@ -628,6 +633,10 @@ run_interactive(){
         mode=${words[0]}
         argument=${words[@]:1}
         restore_ifs
+        if [ -z $mode ]; then
+            echo "Команда не найдена, воспользуйтесь командой help для получения справки"
+            continue
+        fi
         load_or_gen_config
         if [ $mode == "help" ]; then
             print_interactive_help
