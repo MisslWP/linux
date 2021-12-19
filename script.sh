@@ -560,7 +560,7 @@ run_with_menu(){
             continue
         fi
         if [ $mode == "1" ]; then
-            temp_print
+            print_list "$TEMP_FILES" "Список временных файлов:"
         elif [ $mode == "2" ]; then
             read -r -p "Введите новый список расширений временных файлов: "
             temp_new $REPLY
@@ -575,7 +575,7 @@ run_with_menu(){
         elif [ $mode == "6" ]; then
             print_temp_size
         elif [ $mode == "7" ]; then
-            work_print
+            print_list "$WORK_FILES" "Список рабочих файлов:"
         elif [ $mode == "8" ]; then
             read -r -p "Введите новый список расширений рабочих файлов: "
             work_new $REPLY
@@ -707,7 +707,7 @@ run_silent(){
     elif [ $mode == "-g" ]; then
         print_work_info
     elif [ $mode == "-tp" ]; then
-        temp_print
+        print_list "$TEMP_FILES" "Список временных файлов:"
     elif [ $mode == "-tn" ]; then
         temp_new $argument
     elif [ $mode == "-ta" ]; then
@@ -715,7 +715,7 @@ run_silent(){
     elif [ $mode == "-tr" ]; then
         remove_temp_element $argument
     elif [ $mode == "-wp" ]; then
-        work_print
+        print_list "$WORK_FILES" "Список рабочих файлов:"
     elif [ $mode == "-wn" ]; then
         work_new $argument
     elif [ $mode == "-wa" ]; then
